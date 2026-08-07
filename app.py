@@ -34,9 +34,9 @@ def extract_payments(pdf_text):
     )
 
     st.text_area(
-        "Pierwsze 2000 znaków PDF",
-        pdf_text[:2000],
-        height=300
+        "Pierwsze 10000 znaków PDF",
+        pdf_text[:10000],
+        height=500
     )
 
     return payments
