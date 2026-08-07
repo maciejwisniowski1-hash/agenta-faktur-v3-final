@@ -23,12 +23,12 @@ pdf = st.file_uploader(
 
 def extract_transfers(pdf_text):
 
-    matches = list(
-        re.finditer(
-            r"PRZELEW",
-            pdf_text,
-            flags=re.IGNORECASE
-        )
+    pattern = r"PRZELEW.*?(?=PRZELEW|$)"
+
+    matches = re.findall(
+        pattern,
+        pdf_text,
+        flags=re.IGNORECASE | re.DOTALL
     )
 
     transfers = []
@@ -37,34 +37,23 @@ def extract_transfers(pdf_text):
         r"(\d+,\d{2})"
     )
 
-    for i, match in enumerate(matches[:100]):
+    for i, fragment in enumerate(matches):
 
-        start = max(
-            0,
-            match.start() - 120
-        )
-
-        end = min(
-            len(pdf_text),
-            match.start() + 300
-        )
-
-        fragment = pdf_text[start:end]
-
-        fragment_clean = fragment.replace(
-            "\n",
-            " "
+        fragment_clean = (
+            fragment
+            .replace("\n", " ")
+            .replace("  ", " ")
         )
 
         kwoty = amount_pattern.findall(
-            fragment
+            fragment_clean
         )
 
         transfers.append({
             "Nr": i + 1,
             "Ilość kwot": len(kwoty),
             "Kwoty znalezione": " | ".join(kwoty[:10]),
-            "Fragment": fragment_clean[:300]
+            "Fragment": fragment_clean[:500]
         })
 
     return transfers
@@ -91,30 +80,4 @@ if pdf:
 
     for page in reader.pages:
 
-        page_text = page.extract_text()
-
-        if page_text:
-            pdf_text += page_text + "\n"
-
-    st.write(
-        "Długość tekstu PDF:",
-        len(pdf_text)
-    )
-
-    transfers = extract_transfers(
-        pdf_text
-    )
-
-    st.subheader(
-        "Rozpoznane przelewy"
-    )
-
-    st.write(
-        "Liczba przelewów:",
-        len(transfers)
-    )
-
-    st.dataframe(
-        pd.DataFrame(transfers),
-        use_container_width=True
-    )
+        page_text = page.extract_text
