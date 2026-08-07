@@ -89,4 +89,36 @@ if excel:
 
 if pdf:
 
-    reader = PdfReader(
+    reader = PdfReader(pdf)
+
+    pdf_text = ""
+
+    for page in reader.pages:
+
+        page_text = page.extract_text()
+
+        if page_text:
+            pdf_text += page_text + "\n"
+
+    st.write(
+        "Długość tekstu PDF:",
+        len(pdf_text)
+    )
+
+    transfers = extract_transfers(
+        pdf_text
+    )
+
+    st.subheader(
+        "Rozpoznane przelewy"
+    )
+
+    st.write(
+        "Liczba przelewów:",
+        len(transfers)
+    )
+
+    st.dataframe(
+        pd.DataFrame(transfers),
+        use_container_width=True
+    )
