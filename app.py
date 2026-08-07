@@ -1,14 +1,13 @@
 import streamlit as st
 import pandas as pd
 from pypdf import PdfReader
-import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3.1",
+    page_title="Agent Faktur v3 FINAL",
     layout="wide"
 )
 
-st.title("Agent Faktur v3.1")
+st.title("Agent Faktur v3 FINAL")
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -20,62 +19,7 @@ pdf = st.file_uploader(
     type=["pdf"]
 )
 
-
-def extract_bank_operations(pdf_text):
-
-    patterns = [
-        "PRZELEW ELIXIR",
-        "PRZELEW NA RACHUNEK",
-        "PRZELEW24"
-    ]
-
-    operations = []
-
-    upper_text = pdf_text.upper()
-
-    for pattern in patterns:
-
-        pos = 0
-
-        while True:
-
-            idx = upper_text.find(
-                pattern,
-                pos
-            )
-
-            if idx == -1:
-                break
-
-            start = max(
-                0,
-                idx - 150
-            )
-
-            end = min(
-                len(pdf_text),
-                idx + 500
-            )
-
-            fragment = pdf_text[
-                start:end
-            ]
-
-            fragment = (
-                fragment
-                .replace("\n", " ")
-                .replace("  ", " ")
-            )
-
-            operations.append({
-                "Typ": pattern,
-                "Fragment": fragment
-            })
-
-            pos = idx + 1
-
-    return operations
-
+# EXCEL
 
 if excel:
 
@@ -90,6 +34,8 @@ if excel:
         use_container_width=True
     )
 
+# PDF
+
 if pdf:
 
     reader = PdfReader(pdf)
@@ -98,30 +44,33 @@ if pdf:
 
     for page in reader.pages:
 
-        t = page.extract_text()
+        page_text = page.extract_text()
 
-        if t:
-            pdf_text += t + "\n"
+        if page_text:
+            pdf_text += page_text + "\n"
+
+    st.subheader(
+        "PDF"
+    )
 
     st.write(
         "Długość tekstu PDF:",
         len(pdf_text)
     )
 
-    operations = extract_bank_operations(
-        pdf_text
+    st.download_button(
+        "📥 Pobierz tekst PDF",
+        data=pdf_text,
+        file_name="wyciag.txt",
+        mime="text/plain"
     )
 
     st.subheader(
-        "Operacje bankowe"
+        "Podgląd tekstu PDF"
     )
 
-    st.write(
-        "Liczba znalezionych operacji:",
-        len(operations)
-    )
-
-    st.dataframe(
-        pd.DataFrame(operations),
-        use_container_width=True
+    st.text_area(
+        "Pierwsze 5000 znaków",
+        pdf_text[:5000],
+        height=400
     )
