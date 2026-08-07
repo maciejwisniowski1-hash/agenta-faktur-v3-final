@@ -123,4 +123,36 @@ if pdf:
     st.subheader("PDF")
 
     st.write(
-        "Długość tekstu PDF
+        "Długość tekstu PDF:",
+        len(pdf_text)
+    )
+
+    st.download_button(
+        "📥 Pobierz tekst PDF",
+        data=pdf_text,
+        file_name="wyciag.txt",
+        mime="text/plain"
+    )
+
+    invoices = extract_invoices(
+        pdf_text
+    )
+
+    st.subheader(
+        "Faktury znalezione w wyciągu"
+    )
+
+    st.write(
+        "Liczba rekordów:",
+        len(invoices)
+    )
+
+    wynik_df = pd.DataFrame(
+        invoices
+    )
+
+    st.dataframe(
+        wynik_df,
+        use_container_width=True
+    )
+``
