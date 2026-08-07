@@ -155,4 +155,3 @@ if pdf:
         wynik_df,
         use_container_width=True
     )
-``
