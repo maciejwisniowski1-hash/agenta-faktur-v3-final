@@ -119,4 +119,23 @@ if pdf:
         "📥 Pobierz tekst PDF",
         data=pdf_text,
         file_name="wyciag.txt",
-        mime="text/
+        mime="text/plain"
+    )
+
+    invoices = extract_invoices(
+        pdf_text
+    )
+
+    st.subheader(
+        "Faktury znalezione w wyciągu"
+    )
+
+    st.write(
+        "Liczba rekordów:",
+        len(invoices)
+    )
+
+    st.dataframe(
+        pd.DataFrame(invoices),
+        use_container_width=True
+    )
