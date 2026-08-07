@@ -4,11 +4,11 @@ from pypdf import PdfReader
 import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3.3",
+    page_title="Agent Faktur v3.4",
     layout="wide"
 )
 
-st.title("Agent Faktur v3.3")
+st.title("Agent Faktur v3.4")
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -50,11 +50,16 @@ def extract_invoices(pdf_text):
 
         if match_number:
 
-            numer = (
-                match_number.group(1)
-                .strip()
-                .split()[0]
+            line = match_number.group(1).strip()
+
+            numer_match = re.search(
+                r'[A-Z0-9()\-]+(?:/[A-Z0-9()\-]+)+',
+                line,
+                flags=re.IGNORECASE
             )
+
+            if numer_match:
+                numer = numer_match.group(0)
 
         if "/" not in numer:
             continue
@@ -93,6 +98,7 @@ if excel:
         use_container_width=True
     )
 
+
 if pdf:
 
     reader = PdfReader(pdf)
@@ -106,9 +112,7 @@ if pdf:
         if text:
             pdf_text += text + "\n"
 
-    st.subheader(
-        "PDF"
-    )
+    st.subheader("PDF")
 
     st.write(
         "Długość tekstu PDF:",
