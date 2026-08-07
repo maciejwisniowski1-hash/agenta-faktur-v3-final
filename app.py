@@ -95,4 +95,45 @@ if excel:
 
 if pdf:
 
-    reader = PdfReader(
+    reader = PdfReader(pdf)
+
+    pdf_text = ""
+
+    for page in reader.pages:
+
+        text = page.extract_text()
+
+        if text:
+            pdf_text += text + "\n"
+
+    st.subheader("PDF")
+
+    st.write(
+        "Długość tekstu PDF:",
+        len(pdf_text)
+    )
+
+    st.download_button(
+        "📥 Pobierz tekst PDF",
+        data=pdf_text,
+        file_name="wyciag.txt",
+        mime="text/plain"
+    )
+
+    invoices = extract_invoices(
+        pdf_text
+    )
+
+    st.subheader(
+        "Faktury znalezione w wyciągu"
+    )
+
+    st.write(
+        "Liczba rekordów:",
+        len(invoices)
+    )
+
+    st.dataframe(
+        pd.DataFrame(invoices),
+        use_container_width=True
+    )
