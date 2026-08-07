@@ -42,24 +42,31 @@ def extract_invoices(pdf_text):
 
         numer = ""
 
-        match_number = re.search(
-            r'ONLINE\s+([^\n\r]+)',
-            fragment,
-            flags=re.IGNORECASE
+match_number = re.search(
+    r'ONLINE\s+(.{0,80})',
+    fragment,
+    flags=re.IGNORECASE
+)
+
+if match_number:
+
+    line = match_number.group(1)
+
+    dokumenty = re.findall(
+        r'[A-Z0-9()\-]+(?:/[A-Z0-9()\-]+)+',
+        line,
+        flags=re.IGNORECASE
+    )
+
+    if dokumenty:
+
+        dokumenty = sorted(
+            dokumenty,
+            key=len,
+            reverse=True
         )
 
-        if match_number:
-
-            line = match_number.group(1).strip()
-
-            numer_match = re.search(
-                r'[A-Z0-9()\-]+(?:/[A-Z0-9()\-]+)+',
-                line,
-                flags=re.IGNORECASE
-            )
-
-            if numer_match:
-                numer = numer_match.group(0)
+        numer = dokumenty[0]
 
         if "/" not in numer:
             continue
