@@ -1,13 +1,15 @@
 import streamlit as st
 import pandas as pd
 from pypdf import PdfReader
+import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3 FINAL",
+    page_title="Agent Faktur v3.2",
     layout="wide"
 )
 
-st.title("Agent Faktur v3 FINAL")
+st.title("Agent Faktur v3.2")
+
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -19,7 +21,57 @@ pdf = st.file_uploader(
     type=["pdf"]
 )
 
-# EXCEL
+
+def extract_invoices(pdf_text):
+
+    invoices = []
+
+    invoice_pattern = re.compile(
+        r'([A-Z0-9]+(?:/[A-Z0-9]+)+)',
+        re.IGNORECASE
+    )
+
+    amount_pattern = re.compile(
+        r'(\d{1,3}(?:\.\d{3})*,\d{2})'
+    )
+
+    for m in re.finditer(
+        r'PRZELEW.*?(?=2026|2025|$)',
+        pdf_text,
+        flags=re.IGNORECASE | re.DOTALL
+    ):
+
+        fragment = m.group(0)
+
+        faktury = invoice_pattern.findall(
+            fragment
+        )
+
+        kwoty = amount_pattern.findall(
+            fragment
+        )
+
+        numer = ""
+
+        if faktury:
+            numer = max(
+                faktury,
+                key=len
+            )
+
+        kwota = ""
+
+        if kwoty:
+            kwota = kwoty[-2] if len(kwoty) >= 2 else kwoty[0]
+
+        invoices.append({
+            "Numer faktury": numer,
+            "Kwota": kwota,
+            "Fragment": fragment[:200]
+        })
+
+    return invoices
+
 
 if excel:
 
@@ -34,8 +86,6 @@ if excel:
         use_container_width=True
     )
 
-# PDF
-
 if pdf:
 
     reader = PdfReader(pdf)
@@ -44,33 +94,25 @@ if pdf:
 
     for page in reader.pages:
 
-        page_text = page.extract_text()
+        text = page.extract_text()
 
-        if page_text:
-            pdf_text += page_text + "\n"
+        if text:
+            pdf_text += text + "\n"
+
+    invoices = extract_invoices(
+        pdf_text
+    )
 
     st.subheader(
-        "PDF"
+        "Faktury znalezione w wyciągu"
     )
 
     st.write(
-        "Długość tekstu PDF:",
-        len(pdf_text)
+        "Liczba rekordów:",
+        len(invoices)
     )
 
-    st.download_button(
-        "📥 Pobierz tekst PDF",
-        data=pdf_text,
-        file_name="wyciag.txt",
-        mime="text/plain"
-    )
-
-    st.subheader(
-        "Podgląd tekstu PDF"
-    )
-
-    st.text_area(
-        "Pierwsze 5000 znaków",
-        pdf_text[:5000],
-        height=400
+    st.dataframe(
+        pd.DataFrame(invoices),
+        use_container_width=True
     )
