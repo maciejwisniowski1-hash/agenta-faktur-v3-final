@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from pypdf import PdfReader
+import re
 
 st.set_page_config(
     page_title="Agent Faktur v3 FINAL",
@@ -20,26 +21,42 @@ pdf = st.file_uploader(
 )
 
 
-def extract_payments(pdf_text):
+def show_transfer_contexts(pdf_text):
 
-    payments = []
+    st.subheader("Wyszukiwanie słowa PRZELEW")
 
-    st.subheader(
-        "Diagnostyka parsera"
+    matches = list(
+        re.finditer(
+            r"PRZELEW",
+            pdf_text,
+            flags=re.IGNORECASE
+        )
     )
 
     st.write(
-        "Długość tekstu PDF:",
-        len(pdf_text)
+        "Liczba znalezionych słów PRZELEW:",
+        len(matches)
     )
 
-    st.text_area(
-        "Pierwsze 10000 znaków PDF",
-        pdf_text[:10000],
-        height=500
-    )
+    for i, match in enumerate(matches[:20]):
 
-    return payments
+        start = max(
+            0,
+            match.start() - 120
+        )
+
+        end = min(
+            len(pdf_text),
+            match.start() + 300
+        )
+
+        fragment = pdf_text[start:end]
+
+        st.text_area(
+            f"PRZELEW #{i+1}",
+            fragment,
+            height=120
+        )
 
 
 if excel:
@@ -68,20 +85,11 @@ if pdf:
         if page_text:
             pdf_text += page_text + "\n"
 
-    payments = extract_payments(
-        pdf_text
-    )
-
-    st.subheader(
-        "Rozpoznane przelewy"
-    )
-
     st.write(
-        "Liczba przelewów:",
-        len(payments)
+        "Długość tekstu PDF:",
+        len(pdf_text)
     )
 
-    st.dataframe(
-        pd.DataFrame(payments),
-        use_container_width=True
+    show_transfer_contexts(
+        pdf_text
     )
