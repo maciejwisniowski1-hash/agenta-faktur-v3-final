@@ -45,4 +45,96 @@ def extract_invoices(pdf_text):
 
     for fragment in matches:
 
-        faktury = invoice_pattern.findall
+        faktury = invoice_pattern.findall(
+            fragment
+        )
+
+        kwoty = amount_pattern.findall(
+            fragment
+        )
+
+        numer = ""
+
+        if faktury:
+            numer = max(
+                faktury,
+                key=len
+            )
+
+        if "/" not in numer:
+            continue
+
+        kwota = ""
+
+        if len(kwoty) >= 2:
+            kwota = kwoty[-2]
+        elif len(kwoty) == 1:
+            kwota = kwoty[0]
+
+        invoices.append({
+            "Numer faktury": numer,
+            "Kwota": kwota,
+            "Fragment": fragment[:250]
+        })
+
+    return invoices
+
+
+if excel:
+
+    df = pd.read_excel(excel)
+
+    st.success(
+        f"Odczytano {len(df)} rekordów"
+    )
+
+    st.dataframe(
+        df.head(20),
+        use_container_width=True
+    )
+
+
+if pdf:
+
+    reader = PdfReader(pdf)
+
+    pdf_text = ""
+
+    for page in reader.pages:
+
+        text = page.extract_text()
+
+        if text:
+            pdf_text += text + "\n"
+
+    st.subheader("PDF")
+
+    st.write(
+        "Długość tekstu PDF:",
+        len(pdf_text)
+    )
+
+    st.download_button(
+        "📥 Pobierz tekst PDF",
+        data=pdf_text,
+        file_name="wyciag.txt",
+        mime="text/plain"
+    )
+
+    invoices = extract_invoices(
+        pdf_text
+    )
+
+    st.subheader(
+        "Faktury znalezione w wyciągu"
+    )
+
+    st.write(
+        "Liczba rekordów:",
+        len(invoices)
+    )
+
+    st.dataframe(
+        pd.DataFrame(invoices),
+        use_container_width=True
+    )
