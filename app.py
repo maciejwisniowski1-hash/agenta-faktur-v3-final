@@ -23,21 +23,25 @@ pdf = st.file_uploader(
 
 def extract_transfers(pdf_text):
 
-    pattern = r"PRZELEW.*?(?=PRZELEW|$)"
-
-    matches = re.findall(
-        pattern,
-        pdf_text,
-        flags=re.IGNORECASE | re.DOTALL
-    )
-
     transfers = []
 
-    amount_pattern = re.compile(
-        r"(\d+,\d{2})"
+    matches = list(
+        re.finditer(
+            r"20\d{2}[‑-]\d{2}[‑-]\d{2}",
+            pdf_text
+        )
     )
 
-    for i, fragment in enumerate(matches):
+    for i, match in enumerate(matches[:100]):
+
+        start = match.start()
+
+        end = min(
+            len(pdf_text),
+            start + 500
+        )
+
+        fragment = pdf_text[start:end]
 
         fragment_clean = (
             fragment
@@ -45,15 +49,9 @@ def extract_transfers(pdf_text):
             .replace("  ", " ")
         )
 
-        kwoty = amount_pattern.findall(
-            fragment_clean
-        )
-
         transfers.append({
             "Nr": i + 1,
-            "Ilość kwot": len(kwoty),
-            "Kwoty znalezione": " | ".join(kwoty[:10]),
-            "Fragment": fragment_clean[:500]
+            "Operacja": fragment_clean[:500]
         })
 
     return transfers
@@ -99,11 +97,8 @@ if pdf:
     )
 
     st.write(
-        "Liczba przelewów:",
+        "Liczba operacji:",
         len(transfers)
     )
 
-    st.dataframe(
-        pd.DataFrame(transfers),
-        use_container_width=True
-    )
+ 
