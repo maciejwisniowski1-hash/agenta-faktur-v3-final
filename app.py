@@ -4,11 +4,11 @@ from pypdf import PdfReader
 import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3 FINAL",
+    page_title="Agent Faktur v3.1",
     layout="wide"
 )
 
-st.title("Agent Faktur v3 FINAL")
+st.title("Agent Faktur v3.1")
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -21,40 +21,60 @@ pdf = st.file_uploader(
 )
 
 
-def extract_transfers(pdf_text):
+def extract_bank_operations(pdf_text):
 
-    transfers = []
+    patterns = [
+        "PRZELEW ELIXIR",
+        "PRZELEW NA RACHUNEK",
+        "PRZELEW24"
+    ]
 
-    matches = list(
-        re.finditer(
-            r"20\d{2}[‑-]\d{2}[‑-]\d{2}",
-            pdf_text
-        )
-    )
+    operations = []
 
-    for i, match in enumerate(matches[:100]):
+    upper_text = pdf_text.upper()
 
-        start = match.start()
+    for pattern in patterns:
 
-        end = min(
-            len(pdf_text),
-            start + 500
-        )
+        pos = 0
 
-        fragment = pdf_text[start:end]
+        while True:
 
-        fragment_clean = (
-            fragment
-            .replace("\n", " ")
-            .replace("  ", " ")
-        )
+            idx = upper_text.find(
+                pattern,
+                pos
+            )
 
-        transfers.append({
-            "Nr": i + 1,
-            "Operacja": fragment_clean[:500]
-        })
+            if idx == -1:
+                break
 
-    return transfers
+            start = max(
+                0,
+                idx - 150
+            )
+
+            end = min(
+                len(pdf_text),
+                idx + 500
+            )
+
+            fragment = pdf_text[
+                start:end
+            ]
+
+            fragment = (
+                fragment
+                .replace("\n", " ")
+                .replace("  ", " ")
+            )
+
+            operations.append({
+                "Typ": pattern,
+                "Fragment": fragment
+            })
+
+            pos = idx + 1
+
+    return operations
 
 
 if excel:
@@ -78,30 +98,30 @@ if pdf:
 
     for page in reader.pages:
 
-        page_text = page.extract_text()
+        t = page.extract_text()
 
-        if page_text:
-            pdf_text += page_text + "\n"
+        if t:
+            pdf_text += t + "\n"
 
     st.write(
         "Długość tekstu PDF:",
         len(pdf_text)
     )
 
-    transfers = extract_transfers(
+    operations = extract_bank_operations(
         pdf_text
     )
 
     st.subheader(
-        "Rozpoznane przelewy"
+        "Operacje bankowe"
     )
 
     st.write(
-        "Liczba operacji:",
-        len(transfers)
+        "Liczba znalezionych operacji:",
+        len(operations)
     )
 
     st.dataframe(
-        pd.DataFrame(transfers),
+        pd.DataFrame(operations),
         use_container_width=True
     )
