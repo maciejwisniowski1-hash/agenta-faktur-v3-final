@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from pypdf import PdfReader
-import re
 
 st.set_page_config(
     page_title="Agent Faktur v3 FINAL",
@@ -25,44 +24,20 @@ def extract_payments(pdf_text):
 
     payments = []
 
-    lines = pdf_text.split("\n")
-
-    amount_pattern = re.compile(
-        r"(\d{1,3}(?:\.\d{3})*,\d{2})"
+    st.subheader(
+        "Diagnostyka parsera"
     )
 
-    for line in lines:
+    st.write(
+        "Długość tekstu PDF:",
+        len(pdf_text)
+    )
 
-        upper = line.upper()
-
-        if not (
-            "PRZELEW" in upper
-            or "PRZELEW24" in upper
-        ):
-            continue
-
-        amounts = amount_pattern.findall(
-            upper
-        )
-
-        if len(amounts) == 0:
-            continue
-
-        try:
-
-            amount = float(
-                amounts[0]
-                .replace(".", "")
-                .replace(",", ".")
-            )
-
-            payments.append({
-                "Opis": upper,
-                "Kwota": amount
-            })
-
-        except:
-            pass
+    st.text_area(
+        "Pierwsze 2000 znaków PDF",
+        pdf_text[:2000],
+        height=300
+    )
 
     return payments
 
@@ -84,17 +59,17 @@ if pdf:
 
     reader = PdfReader(pdf)
 
-    text = ""
+    pdf_text = ""
 
     for page in reader.pages:
 
         page_text = page.extract_text()
 
         if page_text:
-            text += page_text + "\n"
+            pdf_text += page_text + "\n"
 
     payments = extract_payments(
-        text
+        pdf_text
     )
 
     st.subheader(
