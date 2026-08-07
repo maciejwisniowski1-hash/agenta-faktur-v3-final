@@ -21,12 +21,7 @@ pdf = st.file_uploader(
 )
 
 
-def show_transfer_contexts(pdf_text):
-
-    st.write(
-        "Długość tekstu PDF:",
-        len(pdf_text)
-    )
+def extract_transfers(pdf_text):
 
     matches = list(
         re.finditer(
@@ -36,18 +31,13 @@ def show_transfer_contexts(pdf_text):
         )
     )
 
-    st.subheader(
-        "Wyszukiwanie słowa PRZELEW"
-    )
-
-    st.write(
-        "Liczba znalezionych słów PRZELEW:",
-        len(matches)
-    )
-
     transfers = []
 
-    for i, match in enumerate(matches[:50]):
+    amount_pattern = re.compile(
+        r"(\d+,\d{2})"
+    )
+
+    for i, match in enumerate(matches[:100]):
 
         start = max(
             0,
@@ -61,20 +51,27 @@ def show_transfer_contexts(pdf_text):
 
         fragment = pdf_text[start:end]
 
-        fragment = fragment.replace(
+        fragment_clean = fragment.replace(
             "\n",
             " "
         )
 
+        kwoty = amount_pattern.findall(
+            fragment
+        )
+
+        kwota = ""
+
+        if len(kwoty) > 0:
+            kwota = kwoty[0]
+
         transfers.append({
             "Nr": i + 1,
-            "Fragment": fragment
+            "Kwota": kwota,
+            "Fragment": fragment_clean
         })
 
-    st.dataframe(
-        pd.DataFrame(transfers),
-        use_container_width=True
-    )
+    return transfers
 
 
 if excel:
@@ -92,17 +89,4 @@ if excel:
 
 if pdf:
 
-    reader = PdfReader(pdf)
-
-    pdf_text = ""
-
-    for page in reader.pages:
-
-        page_text = page.extract_text()
-
-        if page_text:
-            pdf_text += page_text + "\n"
-
-    show_transfer_contexts(
-        pdf_text
-    )
+    reader = PdfReader(
