@@ -4,11 +4,11 @@ from pypdf import PdfReader
 import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3.2",
+    page_title="Agent Faktur v3.3",
     layout="wide"
 )
 
-st.title("Agent Faktur v3.2")
+st.title("Agent Faktur v3.3")
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -25,11 +25,6 @@ def extract_invoices(pdf_text):
 
     invoices = []
 
-    invoice_pattern = re.compile(
-        r'([A-Z0-9()\-]+(?:/[A-Z0-9()\-]+)+)',
-        re.IGNORECASE
-    )
-
     amount_pattern = re.compile(
         r'(\d{1,3}(?:\.\d{3})*,\d{2})'
     )
@@ -45,24 +40,23 @@ def extract_invoices(pdf_text):
 
     for fragment in matches:
 
-        faktury = invoice_pattern.findall(
-            fragment
+        numer = ""
+
+        match_number = re.search(
+            r'ONLINE\s+([A-Z0-9()/\-]+)',
+            fragment,
+            flags=re.IGNORECASE
         )
+
+        if match_number:
+            numer = match_number.group(1)
+
+        if "/" not in numer:
+            continue
 
         kwoty = amount_pattern.findall(
             fragment
         )
-
-        numer = ""
-
-        if faktury:
-            numer = max(
-                faktury,
-                key=len
-            )
-
-        if "/" not in numer:
-            continue
 
         kwota = ""
 
