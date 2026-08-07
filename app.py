@@ -10,7 +10,6 @@ st.set_page_config(
 
 st.title("Agent Faktur v3.2")
 
-
 excel = st.file_uploader(
     "Wybierz plik Excel",
     type=["xlsx"]
@@ -27,7 +26,7 @@ def extract_invoices(pdf_text):
     invoices = []
 
     invoice_pattern = re.compile(
-        r'([A-Z0-9()\\-]+(?:/[A-Z0-9()\\-]+)+)',
+        r'([A-Z0-9()\-]+(?:/[A-Z0-9()\-]+)+)',
         re.IGNORECASE
     )
 
@@ -36,7 +35,7 @@ def extract_invoices(pdf_text):
     )
 
     transfer_pattern = re.compile(
-        r'PRZELEW.*?(?=20\d{2}[‑-]\d{2}[‑-]\d{2}|$)',
+        r'PRZELEW.*?(?=20\d{2}|$)',
         re.IGNORECASE | re.DOTALL
     )
 
@@ -46,26 +45,4 @@ def extract_invoices(pdf_text):
 
     for fragment in matches:
 
-        faktury = invoice_pattern.findall(
-            fragment
-        )
-
-        kwoty = amount_pattern.findall(
-            fragment
-        )
-
-        numer = ""
-
-        if faktury:
-            numer = max(
-                faktury,
-                key=len
-            )
-
-        if "/" not in numer:
-            continue
-
-        kwota = ""
-
-        if len(kwoty) >= 2:
-          
+        faktury = invoice_pattern.findall
