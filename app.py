@@ -101,4 +101,7 @@ if pdf:
         len(transfers)
     )
 
- 
+    st.dataframe(
+        pd.DataFrame(transfers),
+        use_container_width=True
+    )
