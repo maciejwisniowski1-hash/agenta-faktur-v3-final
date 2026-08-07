@@ -23,7 +23,10 @@ pdf = st.file_uploader(
 
 def show_transfer_contexts(pdf_text):
 
-    st.subheader("Wyszukiwanie słowa PRZELEW")
+    st.write(
+        "Długość tekstu PDF:",
+        len(pdf_text)
+    )
 
     matches = list(
         re.finditer(
@@ -31,6 +34,10 @@ def show_transfer_contexts(pdf_text):
             pdf_text,
             flags=re.IGNORECASE
         )
+    )
+
+    st.subheader(
+        "Wyszukiwanie słowa PRZELEW"
     )
 
     st.write(
@@ -84,11 +91,6 @@ if pdf:
 
         if page_text:
             pdf_text += page_text + "\n"
-
-    st.write(
-        "Długość tekstu PDF:",
-        len(pdf_text)
-    )
 
     show_transfer_contexts(
         pdf_text
