@@ -43,13 +43,18 @@ def extract_invoices(pdf_text):
         numer = ""
 
         match_number = re.search(
-            r'ONLINE\s+([A-Z0-9()/\-]+)',
+            r'ONLINE\s+([^\n\r]+)',
             fragment,
             flags=re.IGNORECASE
         )
 
         if match_number:
-            numer = match_number.group(1)
+
+            numer = (
+                match_number.group(1)
+                .strip()
+                .split()[0]
+            )
 
         if "/" not in numer:
             continue
@@ -62,6 +67,7 @@ def extract_invoices(pdf_text):
 
         if len(kwoty) >= 2:
             kwota = kwoty[-2]
+
         elif len(kwoty) == 1:
             kwota = kwoty[0]
 
@@ -87,7 +93,6 @@ if excel:
         use_container_width=True
     )
 
-
 if pdf:
 
     reader = PdfReader(pdf)
@@ -101,7 +106,9 @@ if pdf:
         if text:
             pdf_text += text + "\n"
 
-    st.subheader("PDF")
+    st.subheader(
+        "PDF"
+    )
 
     st.write(
         "Długość tekstu PDF:",
@@ -112,23 +119,4 @@ if pdf:
         "📥 Pobierz tekst PDF",
         data=pdf_text,
         file_name="wyciag.txt",
-        mime="text/plain"
-    )
-
-    invoices = extract_invoices(
-        pdf_text
-    )
-
-    st.subheader(
-        "Faktury znalezione w wyciągu"
-    )
-
-    st.write(
-        "Liczba rekordów:",
-        len(invoices)
-    )
-
-    st.dataframe(
-        pd.DataFrame(invoices),
-        use_container_width=True
-    )
+        mime="text/
