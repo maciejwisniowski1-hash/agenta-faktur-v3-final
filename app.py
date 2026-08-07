@@ -4,11 +4,11 @@ from pypdf import PdfReader
 import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3.5",
+    page_title="Agent Faktur v3.6",
     layout="wide"
 )
 
-st.title("Agent Faktur v3.5")
+st.title("Agent Faktur v3.6")
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -29,7 +29,6 @@ def extract_invoices(pdf_text):
         r'(\d{1,3}(?:\.\d{3})*,\d{2})'
     )
 
-    # POPRAWKA
     transfer_pattern = re.compile(
         r'PRZELEW.*?(?=PRZELEW|$)',
         re.IGNORECASE | re.DOTALL
@@ -85,12 +84,87 @@ def extract_invoices(pdf_text):
             kwota = kwoty[0]
 
         invoices.append({
-            "Numer faktury": numer,
+            "Numer faktury": numer.upper(),
             "Kwota": kwota,
             "Fragment": fragment[:250]
         })
 
     return invoices
+
+
+def build_payment_report(df, invoices):
+
+    invoice_map = {}
+
+    for item in invoices:
+
+        numer = str(
+            item["Numer faktury"]
+        ).upper().strip()
+
+        invoice_map[numer] = item
+
+    wynik = []
+
+    for _, row in df.iterrows():
+
+        numer_excel = str(
+            row["Numer dokumentu"]
+        ).upper().strip()
+
+        kwota_faktury = float(
+            row["Brutto"]
+        )
+
+        zaplacono = 0
+
+        if numer_excel in invoice_map:
+
+            kwota_txt = (
+                str(
+                    invoice_map[numer_excel]["Kwota"]
+                )
+                .replace(".", "")
+                .replace(",", ".")
+            )
+
+            try:
+                zaplacono = float(
+                    kwota_txt
+                )
+            except:
+                pass
+
+        roznica = round(
+            zaplacono - kwota_faktury,
+            2
+        )
+
+        if zaplacono == 0:
+
+            status = "BRAK PŁATNOŚCI"
+
+        elif abs(roznica) <= 0.01:
+
+            status = "OPŁACONA"
+
+        elif zaplacono < kwota_faktury:
+
+            status = "CZĘŚCIOWO OPŁACONA"
+
+        else:
+
+            status = "NADPŁATA"
+
+        wynik.append({
+            "Numer dokumentu": numer_excel,
+            "Kwota faktury": kwota_faktury,
+            "Zapłacono": zaplacono,
+            "Różnica": roznica,
+            "Status": status
+        })
+
+    return pd.DataFrame(wynik)
 
 
 if excel:
@@ -105,7 +179,6 @@ if excel:
         df.head(20),
         use_container_width=True
     )
-
 
 if pdf:
 
@@ -128,30 +201,4 @@ if pdf:
     )
 
     st.download_button(
-        "📥 Pobierz tekst PDF",
-        data=pdf_text,
-        file_name="wyciag.txt",
-        mime="text/plain"
-    )
-
-    invoices = extract_invoices(
-        pdf_text
-    )
-
-    st.subheader(
-        "Faktury znalezione w wyciągu"
-    )
-
-    st.write(
-        "Liczba rekordów:",
-        len(invoices)
-    )
-
-    wynik_df = pd.DataFrame(
-        invoices
-    )
-
-    st.dataframe(
-        wynik_df,
-        use_container_width=True
-    )
+        "
