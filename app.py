@@ -4,11 +4,11 @@ from pypdf import PdfReader
 import re
 
 st.set_page_config(
-    page_title="Agent Faktur v3.4",
+    page_title="Agent Faktur v3.5",
     layout="wide"
 )
 
-st.title("Agent Faktur v3.4")
+st.title("Agent Faktur v3.5")
 
 excel = st.file_uploader(
     "Wybierz plik Excel",
@@ -29,8 +29,9 @@ def extract_invoices(pdf_text):
         r'(\d{1,3}(?:\.\d{3})*,\d{2})'
     )
 
+    # POPRAWKA
     transfer_pattern = re.compile(
-        r'PRZELEW.*?(?=20\d{2}|$)',
+        r'PRZELEW.*?(?=PRZELEW|$)',
         re.IGNORECASE | re.DOTALL
     )
 
@@ -43,7 +44,7 @@ def extract_invoices(pdf_text):
         numer = ""
 
         match_number = re.search(
-            r'ONLINE\s+(.{0,80})',
+            r'ONLINE\s+(.{0,120})',
             fragment,
             flags=re.IGNORECASE
         )
@@ -105,6 +106,7 @@ if excel:
         use_container_width=True
     )
 
+
 if pdf:
 
     reader = PdfReader(pdf)
@@ -121,31 +123,4 @@ if pdf:
     st.subheader("PDF")
 
     st.write(
-        "Długość tekstu PDF:",
-        len(pdf_text)
-    )
-
-    st.download_button(
-        "📥 Pobierz tekst PDF",
-        data=pdf_text,
-        file_name="wyciag.txt",
-        mime="text/plain"
-    )
-
-    invoices = extract_invoices(
-        pdf_text
-    )
-
-    st.subheader(
-        "Faktury znalezione w wyciągu"
-    )
-
-    st.write(
-        "Liczba rekordów:",
-        len(invoices)
-    )
-
-    st.dataframe(
-        pd.DataFrame(invoices),
-        use_container_width=True
-    )
+        "Długość tekstu PDF
